@@ -1,217 +1,158 @@
-
 # Cascode Current Mirror Design, Layout & Post-Layout Verification
 
-**Analog VLSI Design | Cadence Virtuoso | CMOS Analog IC Design**
+**Analog VLSI · Cadence Virtuoso · CMOS Analog IC Design**
 
-A 100 µA target-current cascode current mirror designed and verified using the gm/Id transistor-sizing methodology in Cadence Virtuoso. This project covers NMOS characterization, transistor sizing, schematic design, physical layout, matching techniques, and pre-layout versus post-layout simulation.
+Design and verification of an NMOS cascode current mirror targeting **100 µA**, using MOSFET characterization and the **gm/Id sizing methodology**. The project covers schematic design, transistor sizing, physical layout, matching strategy, extracted-view simulation, and pre-layout/post-layout comparison.
 
-## Project Overview
+> **Tool:** Cadence Virtuoso  
+> **Target current:** 100 µA  
+> **Nominal supply shown in the testbench:** 1.2 V  
+> **Device sizing shown in the schematic:** W = 3.63 µm, L = 100 nm, m = 2 (verify width/finger interpretation against the PDK instance settings).
 
-Current mirrors are fundamental building blocks in analog integrated circuits, commonly used for biasing, active loads, and current references.
+## Repository contents
 
-This project focuses on designing an NMOS cascode current mirror with a target output current of 100 µA. The design process starts with transistor characterization and gm/Id-based sizing, followed by schematic implementation, layout design, and post-layout verification.
+```text
+cascode-current-mirror-cadence/
+├── README.md
+├── docs/
+│   ├── design-flow.md
+│   └── simulation-results.md
+└── images/
+    ├── 01-pre-layout-simulation.png
+    ├── 02-post-layout-simulation.png
+    ├── 03-av-extracted-view.png
+    ├── 04-layout-matching.png
+    ├── 05-symbol.png
+    ├── 06-schematic.png
+    └── 07-gm-over-id.png
+```
 
-The objective is to investigate how well the physical implementation preserves the current-mirroring performance observed during pre-layout simulation.
+The image paths above are the intended filenames for the screenshots shared with this project. Add the corresponding files to the `images/` directory so they render below.
 
-## Design Specifications
+## Project overview
 
-| Parameter | Value |
-|---|---|
-| Circuit | NMOS Cascode Current Mirror |
-| Target current | 100 µA |
-| Initial characterization width | 1 µm |
-| Calculated transistor width | Approximately 3.625 µm |
-| Design tool | Cadence Virtuoso |
-| Sizing methodology | gm/Id |
-| Layout matching strategy | Common-centroid ABBA arrangement |
-| Finger configuration | 2 fingers per transistor |
-| Multiplier configuration | 2 multipliers per transistor |
+A current mirror is a fundamental analog building block used to generate bias currents and active loads. A cascode structure increases output resistance and can improve current stability against output-voltage changes, provided the transistors remain in their intended operating regions.
 
-*Note: The transistor width and device configuration are based on the design implementation. Confirm whether the reported width represents per-finger width, total effective width, or schematic instance width before interpreting the final geometry.*
+The design flow followed here:
 
-## Design Flow
+1. **NMOS characterization** — examined device characteristics and the gm/Id relationship using an initial width of 1 µm.
+2. **Transistor sizing** — used gm/Id as a design aid to select a device width for the target current.
+3. **Schematic design** — implemented the cascode current mirror and ran a DC sweep before layout.
+4. **Layout implementation** — arranged devices using a matching-oriented ABBA/common-centroid strategy and a multi-finger/multiplier configuration.
+5. **Extracted-view verification** — simulated the extracted layout and compared its output current with the pre-layout result.
 
-The project follows the analog IC design flow from device characterization to physical verification.
+## 1. NMOS characterization and gm/Id
 
-1. **NMOS Characterization**  
-   Characterized an NMOS transistor using an initial width of 1 µm and studied the relationship between drain current, transconductance, and transistor sizing.
-
-2. **gm/Id-Based Transistor Sizing**  
-   Used the gm/Id methodology to guide transistor sizing for the desired current level. The resulting transistor width was approximately 3.625 µm.
-
-3. **Schematic Design**  
-   Implemented the cascode current mirror in Cadence Virtuoso and performed pre-layout simulation to evaluate its current-mirroring behavior.
-
-4. **Physical Layout**  
-   Implemented the transistor layout using a common-centroid ABBA arrangement to improve matching between corresponding devices. A multi-finger and multiplier-based implementation was used.
-
-5. **Post-Layout Verification**  
-   Evaluated the extracted layout through post-layout simulation and compared its output current against the pre-layout result.
-
-## 1. NMOS Characterization
-
-NMOS characterization provides insight into transistor behavior before designing the complete circuit.
-
-The gm/Id methodology uses the ratio of transconductance to drain current:
+The ratio
 
 \[
 \frac{g_m}{I_D}
 \]
 
-where:
+is a measure of transconductance efficiency, where \(g_m\) is small-signal transconductance and \(I_D\) is drain current. It helps guide the trade-off among current, transconductance, operating region, and transistor dimensions.
 
-- \(g_m\) is the small-signal transconductance.
-- \(I_D\) is the DC drain current.
+![gm/Id characterization plot](images/07-gm-over-id.png)
 
-The gm/Id ratio is useful for choosing an operating region and balancing current consumption, transconductance, and transistor sizing.
+*Figure 1 — NMOS characterization plots from Cadence Virtuoso. Refer to the plotted axes and operating point when documenting the final sizing choice.*
 
-**Characterization setup:** Initial transistor width = 1 µm.
+The characterization setup used an initial transistor width of **1 µm**. The design schematic shows a width of approximately **3.63 µm**, with **L = 100 nm** and **m = 2**. In Cadence, confirm whether the displayed width is per finger or total instance width and how the PDK applies the multiplier before comparing it with the physical layout.
 
-![NMOS characterization](characterization/gm_id_curve.png)
+## 2. Schematic and testbench
 
-*Replace this image with the actual gm/Id characterization plot.*
+![Cascode current mirror schematic](images/06-schematic.png)
 
-## 2. Transistor Sizing
+*Figure 2 — Cascode current mirror schematic in Cadence Virtuoso.*
 
-The transistor sizing process was guided by the characterized device behavior and the desired operating current.
+![Current mirror symbol and testbench](images/05-symbol.png)
 
-The approximate transistor width obtained during the design process was:
+*Figure 3 — Symbol-level testbench used for the DC output-current sweep.*
 
-\[
-W \approx 3.625\ \mu\text{m}
-\]
+The testbench sweeps the output voltage and observes the output current. The current should be evaluated over the intended operating range, rather than at only one output-voltage point, because the cascode devices need sufficient voltage headroom to remain in saturation.
 
-The final implementation also used two fingers and a multiplier of two per transistor instance.
+## 3. Pre-layout simulation
 
-The effective transistor width must be interpreted according to the PDK and the way the instance parameters are defined in Cadence Virtuoso. The sizing calculation and the physical finger geometry should be documented separately where applicable.
+![Pre-layout DC simulation](images/01-pre-layout-simulation.png)
 
-## 3. Cascode Current Mirror Schematic
+*Figure 4 — Pre-layout DC response. The marker reads approximately **97.99958 µA at Vout = 0.6 V**.*
 
-The cascode current mirror uses additional transistors to improve output resistance and reduce the influence of output-voltage variations on the mirrored current, compared with a simple current mirror under suitable operating conditions.
+The pre-layout current is close to the 100 µA target at the marked operating point. The full sweep also helps show how the output current varies with output voltage.
 
-The circuit was implemented in Cadence Virtuoso and simulated before layout.
+## 4. Layout and matching strategy
 
-![Cascode current mirror schematic](schematic/cascode_schematic.png)
+![Cascode current mirror layout with matching arrangement](images/04-layout-matching.png)
 
-*Insert the actual Cadence Virtuoso schematic screenshot.*
+*Figure 5 — Physical layout in Cadence Virtuoso, showing the device placement and routing.*
 
-### Pre-Layout Simulation
+The layout uses a matching-oriented **ABBA/common-centroid arrangement** and a multi-finger/multiplier implementation. Such placement can help reduce systematic mismatch from spatial process gradients when the devices are partitioned into appropriate unit devices. Matching also depends on symmetric routing, orientation, surroundings, dummy devices where appropriate, and parasitic effects.
 
-The pre-layout simulation was used to evaluate the output current before including the parasitic effects introduced by physical implementation and interconnect extraction.
+Review the actual layout to verify which devices form the A and B groups and whether the intended centroid and routing symmetry are achieved.
 
-![Pre-layout simulation](schematic/pre_layout_simulation.png)
+## 5. Extracted view and post-layout simulation
 
-*Insert the actual pre-layout simulation plot.*
+![Extracted layout view](images/03-av-extracted-view.png)
 
-## 4. Layout Design and Matching
+*Figure 6 — Extracted view used for post-layout verification.*
 
-The physical layout was implemented in Cadence Virtuoso with attention to transistor placement and matching.
+![Post-layout DC simulation](images/02-post-layout-simulation.png)
 
-### Layout techniques
+*Figure 7 — Post-layout DC response. The marker reads approximately **97.8203 µA at Vout = 0.6 V**.*
 
-- **Common-centroid ABBA arrangement:** Used as a placement strategy to help reduce systematic mismatch caused by spatial process gradients when the corresponding devices are implemented as appropriately matched unit devices.
-- **Multi-finger implementation:** Used two fingers per transistor instance.
-- **Multiplier configuration:** Used a multiplier of two per transistor instance.
-- **Device matching:** Considered device placement and layout symmetry to support consistent current-mirroring behavior.
+Post-layout simulation includes the parasitic effects represented by the extraction flow. A close pre-layout/post-layout result is useful evidence that the physical implementation preserves the circuit's behavior under the simulated conditions; it does not by itself establish performance across all corners or mismatch conditions.
 
-The effectiveness of these techniques depends on the actual unit-device arrangement, routing symmetry, dummy devices where needed, and the surrounding layout environment.
+## 6. Simulation results
 
-![Current mirror layout](layout/layout_view.png)
+At the marked operating point **Vout = 0.6 V**:
 
-*Insert the actual layout screenshot from Cadence Virtuoso.*
-
-![Matching arrangement](layout/matching_strategy.png)
-
-*Insert an annotated screenshot showing the ABBA arrangement, if available.*
-
-## 5. Post-Layout Verification
-
-Post-layout simulation was performed to evaluate the circuit after physical layout and parasitic extraction.
-
-### Simulation Results
-
-| Parameter | Current |
+| Metric | Result |
 |---|---:|
 | Target current | 100 µA |
-| Pre-layout current | 97.99 µA |
-| Post-layout current | 97.82 µA |
-| Absolute pre/post difference | 0.17 µA |
-| Pre/post relative change | Approximately 0.17% |
+| Pre-layout current (marker) | 97.99958 µA |
+| Post-layout current (marker) | 97.8203 µA |
+| Absolute pre/post difference | 0.17928 µA |
+| Relative pre/post change, referenced to pre-layout | ≈ 0.183% |
+| Post-layout deviation from target | ≈ −2.18% |
 
-### Relative Change Calculation
+The difference is calculated from the more precise values visible in the supplied screenshots:
 
 \[
-\Delta I = |97.99-97.82|
+\Delta I = |97.99958 - 97.8203| = 0.17928\ \mu\text{A}
 \]
 
 \[
-\Delta I = 0.17\ \mu\text{A}
+\text{Relative change} =
+\frac{0.17928}{97.99958}\times100
+\approx 0.183\%
 \]
 
-Using the pre-layout current as the reference:
+The pre-layout and post-layout currents differ by approximately **0.18%** at the marked point. The post-layout current is approximately **2.18% below the 100 µA target**, which is a separate metric from the pre/post difference.
 
-\[
-\%\text{ change} =
-\frac{|I_{\text{post}}-I_{\text{pre}}|}
-{I_{\text{pre}}}\times100
-\]
+## Key learnings
 
-\[
-=\frac{0.17}{97.99}\times100
-\approx 0.17\%
-\]
-
-The difference between the pre-layout and post-layout currents is approximately 0.17%, indicating close agreement between the two simulated results under the tested conditions.
-
-The post-layout current is approximately 2.18% below the 100 µA target. This target-current error is distinct from the pre-layout-to-post-layout change.
-
-![Post-layout simulation](verification/post_layout_simulation.png)
-
-*Insert the actual post-layout simulation plot.*
-
-![Pre-layout versus post-layout](verification/pre_vs_post_layout.png)
-
-*Insert a comparison plot or a combined screenshot of both simulation results.*
-
-## 6. Key Learnings
-
-Through this project, I explored:
-
-- MOSFET characterization and interpretation of gm/Id curves.
-- gm/Id-based transistor sizing for analog circuit design.
-- Cascode current mirror operation and current-mirroring principles.
+- MOSFET DC characterization and gm/Id interpretation.
+- gm/Id-guided transistor sizing.
+- Cascode current-mirror operation and output-voltage dependence.
 - Multi-finger and multiplier-based transistor implementation.
-- Common-centroid placement and the ABBA matching strategy.
-- Schematic-to-layout implementation in Cadence Virtuoso.
-- Pre-layout versus post-layout simulation and the influence of physical implementation.
+- Matching-oriented layout placement and routing.
+- Extracted-view and post-layout simulation.
+- Quantitative comparison of pre-layout and post-layout results.
 
-## Tools and Technologies
+## Possible next steps
 
-- Cadence Virtuoso
-- CMOS analog circuit design
-- MOSFET characterization
-- gm/Id methodology
-- Analog layout and matching
-- Parasitic extraction and post-layout simulation
+- Check current accuracy over the full output-voltage range and identify the compliance/headroom limit.
+- Run DRC and LVS and document the results, if completed.
+- Compare extracted parasitics and their impact on output current.
+- Evaluate PVT corners and Monte Carlo mismatch.
+- Measure output resistance and power consumption.
 
-## Future Improvements
+## Tools and technologies
 
-Potential next steps include:
+Cadence Virtuoso · Spectre simulation · CMOS analog design · MOSFET characterization · gm/Id methodology · Analog layout · Parasitic extraction · Post-layout verification
 
-- Evaluating output resistance and current-mirror accuracy across the output-voltage range.
-- Investigating the minimum output voltage required to keep the cascode devices in saturation.
-- Quantifying layout parasitics and their effect on current accuracy.
-- Performing process, voltage, and temperature (PVT) corner simulations.
-- Evaluating mismatch using Monte Carlo simulations.
-- Investigating power consumption, operating range, and robustness.
+## Notes on reproducibility
 
-## Conclusion
-
-This project provided practical exposure to the analog IC design flow, from transistor characterization and gm/Id-based sizing to schematic implementation, physical layout, and post-layout verification.
-
-The close agreement between the pre-layout and post-layout simulated currents demonstrates that the implemented layout preserves the observed current-mirroring performance under the simulated conditions.
+This repository documents the design process and selected simulation screenshots. It does **not** currently include a portable, independently runnable Cadence project or PDK. Proprietary PDK files, foundry models, license files, and restricted institutional design data should not be uploaded.
 
 ---
 
-**Project focus:** Analog VLSI | CMOS Design | Current Mirrors | Cadence Virtuoso | Analog Layout & Verification
-
+**Project:** Cascode Current Mirror Design, Layout & Post-Layout Verification  
+**Focus:** Analog VLSI · CMOS Design · Current Mirrors · Cadence Virtuoso
